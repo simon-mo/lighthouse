@@ -8,6 +8,5 @@ COPY Pipfile .
 RUN pipenv install --skip-lock --dev
 
 COPY lighthouse .
-WORKDIR /app/lighthouse
 
 ENTRYPOINT ["pipenv", "run"]
