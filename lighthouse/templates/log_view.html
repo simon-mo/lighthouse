@@ -1,0 +1,138 @@
+<!-- chat/templates/chat/room.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+      integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Inconsolata"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+
+    <!--
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    -->
+    <!--
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
+    -->
+    <title>Docker Log</title>
+  </head>
+
+  <body>
+    <div class="container-fluid">
+      <div class="card">
+        <div id="log">
+          <div class="card-header">{{ topic }}</div>
+          <div class="card-body">
+            <p
+              v-for="log in logs"
+              style="font-family: 'Inconsolata', monospace;     
+                    margin-block-start: 0em;
+                    margin-block-end: 0em;
+                    display: inline-block;"
+            >
+              <font :color="log.color">
+                [{{ log.container_name }}] {{ log.log }}
+              </font>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      var scrollable = true;
+      function disable_scroll() {
+        scrollable = false;
+      }
+    </script>
+
+    <a onclick="disable_scroll()" href="javascript:void(0);"
+      >Don't Automatically Scroll to Buttom</a
+    >
+
+    <script>
+      var colors = [
+        "#790f8a",
+        "#0f398a",
+        "#2f0f8a",
+        "#8a0f51",
+        "#8a850f",
+        "#8a3b0f",
+        "#0f828a",
+        "#208a0f",
+        "#540f8a",
+        "#0f148a",
+        "#6a8a0f",
+        "#0f8a23",
+        "#0f5e8a",
+        "#8a0f2d",
+        "#0f8a48",
+        "#0f8a6c",
+        "#8a600f",
+        "#8a0f76",
+        "#458a0f",
+        "#8a170f"
+      ];
+      var color_map = {};
+      function get_color(name) {
+        if (!(name in color_map)) {
+          idx = Math.floor(Math.random() * colors.length);
+          color_chosen = colors.pop(colors[idx]);
+          color_map[name] = color_chosen;
+        }
+        return color_map[name];
+      }
+
+      var path =
+        window.location.host +
+        "/ws" +
+        window.location.pathname.replace("/log", "");
+      var topic_name = path.split("/")[2];
+      var log_socket = new WebSocket("ws://" + path);
+      var logs = [];
+      var app4 = new Vue({
+        el: "#log",
+        data: {
+          logs: logs,
+          topic: topic_name
+        }
+      });
+
+      log_socket.onmessage = function(e) {
+        if (e.data == "ping") {
+          log_socket.send("pong");
+        } else {
+          var data = JSON.parse(e.data);
+          var message = data["message"];
+          log = JSON.parse(message);
+          log.color = get_color(log.container_name);
+          logs.push(log);
+        }
+
+        if (scrollable) {
+          window.scrollTo(0, document.body.scrollHeight);
+        }
+      };
+
+      log_socket.onclose = function(e) {
+        console.error("Websocket closed unexpectedly");
+      };
+    </script>
+  </body>
+</html>
