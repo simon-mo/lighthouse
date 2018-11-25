@@ -5,7 +5,7 @@ RUN pip install pipenv
 
 WORKDIR /app
 COPY Pipfile .
-RUN pipenv install --skip-lock
+RUN pipenv install --skip-lock --dev
 
 COPY lighthouse .
 WORKDIR /app/lighthouse
