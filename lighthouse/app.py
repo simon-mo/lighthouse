@@ -3,15 +3,21 @@ import json
 import logging
 from time import time
 
+import click
 import uvicorn
-from aiokafka import AIOKafkaConsumer, TopicPartition
 from starlette.applications import Starlette
+from starlette.requests import Request
 from starlette.responses import FileResponse, UJSONResponse
 from starlette.websockets import WebSocketDisconnect, WebSocketState
-from starlette.requests import Request
-import click
 
-from model import create_build, report_checkpoint, init_db, get_build_dict, get_checkpoint_by_build_and_target
+from aiokafka import AIOKafkaConsumer, TopicPartition
+from model import (
+    create_build,
+    get_build_dict,
+    get_checkpoint_by_build_and_target,
+    init_db,
+    report_checkpoint,
+)
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s",
@@ -52,7 +58,7 @@ async def api_create_checkpoint(request: Request):
                     "success": "false",
                     "error": "api must be called with /api/checkpoint/start or /api/checkpoint/finish",
                 },
-                status_code=400
+                status_code=400,
             )
 
         report_checkpoint(
@@ -62,16 +68,23 @@ async def api_create_checkpoint(request: Request):
             target,
             request.query_params.get("exit_code", None),
         )
-        return UJSONResponse({'success': 'true'})
+        return UJSONResponse({"success": "true"})
     except Exception as e:
         return UJSONResponse({"success": "false", "error": str(e)}, status_code=500)
 
+
 @app.route("/api/checkpoint/{build}/{target}", methods=["GET"])
 async def api_get_checkpoint(request: Request):
-    build = request.path_params['build']
-    target = request.path_params['target']
-    if build == '*' and target == "*":
-        return UJSONResponse({"success": "false", "error": "must specify at least one of build or target"}, status_code=400)
+    build = request.path_params["build"]
+    target = request.path_params["target"]
+    if build == "*" and target == "*":
+        return UJSONResponse(
+            {
+                "success": "false",
+                "error": "must specify at least one of build or target",
+            },
+            status_code=400,
+        )
     return UJSONResponse(get_checkpoint_by_build_and_target(build, target))
 
 

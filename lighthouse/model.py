@@ -1,5 +1,6 @@
-from pony import orm
 from datetime import datetime
+
+from pony import orm
 
 db: orm.Database = orm.Database()
 
@@ -66,15 +67,16 @@ def get_build_dict(tag):
 
 @orm.db_session
 def get_checkpoint_by_build_and_target(build, target):
-    if build == '*':
+    if build == "*":
         filter_func = lambda item: item.make_target_name == target
-    elif target == '*':
+    elif target == "*":
         filter_func = lambda item: item.BUILD_TAG == Build[build]
     else:
-        filter_func = lambda item: item.BUILD_TAG == Build[build] and item.make_target_name == target
-    checkpoints = CheckPoint.select(
-        filter_func
-    ).fetch()
+        filter_func = (
+            lambda item: item.BUILD_TAG == Build[build]
+            and item.make_target_name == target
+        )
+    checkpoints = CheckPoint.select(filter_func).fetch()
     return list(c.to_dict() for c in checkpoints)
 
 

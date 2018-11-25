@@ -1,13 +1,17 @@
+import json
+import os
+
+import pytest
 from starlette.testclient import TestClient
 
 from app import app
 from model import init_db, inject_test_data
-import pytest
-import json
-import os
 
-FILE_NAME = os.path.join(os.path.split(__file__)[0], "test_data/jenkins_env_sample.json")
+FILE_NAME = os.path.join(
+    os.path.split(__file__)[0], "test_data/jenkins_env_sample.json"
+)
 TAG = "jenkins-Clipper-PRB-1672"
+
 
 @pytest.fixture(scope="session")
 def client():
@@ -15,6 +19,7 @@ def client():
     init_db(debug=True)
     inject_test_data(FILE_NAME, TAG)
     return client_app
+
 
 def test_build(client):
     env = json.load(open(FILE_NAME))
@@ -43,4 +48,3 @@ def test_build(client):
 
     resp = client.get(f"/api/checkpoint/*/{target_name}")
     assert len(resp.json()) == 4, resp.content
-
